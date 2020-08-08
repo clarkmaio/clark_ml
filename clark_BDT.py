@@ -97,11 +97,11 @@ class clark_BDT(object):
         """
         shap.summary_plot(self.shap_values, X)
         plt.savefig(os.path.join(self.mdl_config['mdl_path'], 'BDT_shap_values.png'))
-        plt.clf()
+        plt.close()
 
         shap.summary_plot(self.shap_values, X, plot_type='bar')
         plt.savefig(os.path.join(self.mdl_config['mdl_path'], 'BDT_shap_importance.png'))
-        plt.clf()
+        plt.close()
 
     # ---------------------- PLOT ---------------------------
     def loss_plot(self):
@@ -126,7 +126,7 @@ class clark_BDT(object):
             plot_path = os.path.join(self.mdl_config['mdl_path'], 'BDT_{}_curve.png'.format(m.upper()))
             plt.savefig(plot_path)
 
-            plt.clf()
+            plt.close()
 
 
 
