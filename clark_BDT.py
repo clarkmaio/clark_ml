@@ -1,16 +1,14 @@
+__author__ = 'clarkmaio'
+
 import pandas as pd
-import numpy as np
 import pickle
 import os
-from pprint import pprint
-import sys
+
 
 import shap
 from xgboost import XGBRegressor
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
-from plotly.offline import plot
-from plotly import graph_objs as go
 import matplotlib.pyplot as plt
 
 class clark_BDT(object):
