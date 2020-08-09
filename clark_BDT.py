@@ -29,10 +29,16 @@ class clark_BDT(object):
     def _initialize_mdl(self):
         """
         Initilize model.
-        Create mdl_path
+        Create mdl_path folder
         """
         if not os.path.exists(self.mdl_config['mdl_path']):
             os.mkdir(self.mdl_config['mdl_path'])
+
+        # Upload grid_search params
+        gs_path = os.path.join(self.mdl_config['mdl_path'], 'BDT_grid_search.p')
+        if self.mdl_config['use_gs_params'] and os.path.exists(gs_path):
+            self.mdl_config['params'] = pickle.load(open(gs_path, 'rb'))
+
         self.mdl = XGBRegressor(**self.mdl_config['params'])
 
     def fit(self, X, y, **kwargs):
@@ -69,6 +75,7 @@ class clark_BDT(object):
     # ---------------------- GRID SEARCH ---------------------------
     # TODO option for Random grid search
     def grid_search(self, X, y):
+        """Perform grid search and save dictionary"""
 
         print('>>>>> Starting grid search...')
         param_grid = self.mdl_config['grid_search']['param_grid']
@@ -78,7 +85,13 @@ class clark_BDT(object):
         gs.fit(X, y)
         print('>>>>> Best params: {}'.format(gs.best_params_))
 
+        gs_path = os.path.join(self.mdl_config['mdl_path'], 'BDT_grid_search.p')
+        pickle.dump(gs.best_params_,  open(gs_path, 'wb'))
+
         return gs.best_params_
+
+    def load_grid_search(self):
+        """Load grid search params if pickle exist"""
 
     # ---------------------- SHAP ---------------------------
     def _initialize_shap(self, *args, **kwargs):
@@ -131,9 +144,11 @@ class clark_BDT(object):
 if __name__ == '__main__':
     from sklearn.datasets import load_boston
     from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_absolute_error
 
     mdl_config = {
         'mdl_path': 'C:\\Users\\pc\\workspace\\clark_ml\\BDT_mdl_path',
+        'use_gs_params': True,
         'params':{
             'n_estimators': 100,
             'max_depth':5
@@ -141,11 +156,14 @@ if __name__ == '__main__':
 
         'grid_search':{
             'param_grid':{
-                'n_estimators': [100, 200, 300],
-                'max_depth': [2,3,4],
+                'n_estimators': [100,300,500,700,1000],
+                'max_depth': [4,6,8,10],
+                'subsample': [.5, .75, 1]
             },
             'params':{
-                'verbose' : 0, # 2 for full messages
+                'verbose' : 2, # 2 for full messages
+                'cv': 4,
+                'n_jobs':2
             }
         }
     }
@@ -158,11 +176,17 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8)
     mdl = clark_BDT(mdl_config = mdl_config)
     mdl.fit(X_train, y_train, eval_set = [(X_train, y_train), (X_test, y_test)], eval_metric = ['mae', 'rmse'])
+    y_trai_pred = mdl.predict(X_train)
+    y_pred = mdl.predict(X_test)
+
+    # Score
+    print('MAE train: {}'.format(mean_absolute_error(y_train, y_trai_pred)))
+    print('MAE test: {}'.format(mean_absolute_error(y_test, y_pred)))
 
     # Plot loss
     mdl.loss_plot()
 
-    # Gridsearch
+    # # Gridsearch
     # best_params = mdl.grid_search(X_train, y_train)
 
     # Shap
@@ -170,4 +194,4 @@ if __name__ == '__main__':
     mdl.shap_summary_plot(X_train)
 
     # Save mdl
-    mdl.save()
+    #mdl.save()
